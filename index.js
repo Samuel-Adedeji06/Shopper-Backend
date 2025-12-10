@@ -4,12 +4,34 @@ const app = express();
 const mongoose = require("mongoose")
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const path = require("path");
+// const path = require("path");
 const cors = require("cors");
 const { type } = require("os");
+const path = require("path");
 
 app.use(express.json());
 app.use(cors());
+
+// Cloudinary & Upload
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+// Cloudinary SetUp
+
+cloudinary.config({
+    cloud_name: "dqmer4kx5",
+    api_key: 334727573964611,
+    api_secret: "yZYTFS2bbuwIIqOtfaKZChhBy48"
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: "E-Commerce Shopper Product"
+    }
+})
+
+const upload = multer({ storage });
 
 
 // Database connection with mongoDB
@@ -22,14 +44,14 @@ app.get("/", (req, res)=>{
 })
 
 // Image storage engine
-const storage = multer.diskStorage({
-    destination: './upload/images',
-    filename:(req,file,cb)=>{
-        return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
-    }
-})
+// const storage = multer.diskStorage({
+//     destination: './upload/images',
+//     filename:(req,file,cb)=>{
+//         return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
+//     }
+// })
 
-const upload = multer({storage: storage})
+// const upload = multer({storage: storage})
 
 // Creating upload Endpoint for images
 app.use('/images', express.static('upload/images'))
@@ -37,7 +59,7 @@ app.use('/images', express.static('upload/images'))
 app.post("/upload", upload.single('product'),(req, res)=>{
     res.json({
         success:1,
-        image_url: `https://shopper-backend-t7hv.onrender.com/images/${req.file.filename}` 
+        image_url: req.file.path ,
     })
 })
 
@@ -80,15 +102,18 @@ const Product = mongoose.model("Product", {
 
 app.post("/addproduct", async (req, res)=>{
     let products = await Product.find({});
-    let id;
-    if(products.length>0) {
-        let last_product_array = products.slice(-1);
-        let last_product = last_product_array[0];
-        id = last_product.id+1;
-    } 
-    else {
-        id=1;
-    }
+    // let id;
+    // if(products.length>0) {
+    //     let last_product_array = products.slice(-1);
+    //     let last_product = last_product_array[0];
+    //     id = last_product.id+1;
+    // } 
+    // else {
+    //     id=1;
+    // }
+
+    let id = products.length > 0 ? products.slice(-1)[0].id + 1 : 1;
+
     const product = new Product({
         id: id,
         name: req.body.name,
